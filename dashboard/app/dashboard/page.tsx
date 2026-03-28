@@ -5,7 +5,7 @@ import { fmt, fmtDate } from '@/lib/utils';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { TrendingUp, Users, CreditCard, Landmark, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { TrendingUp, Users, CreditCard, Landmark, AlertCircle, CheckCircle2, Clock, Sparkles, Smartphone } from 'lucide-react';
 
 interface Chama {
   id: string; name: string; contributionAmount: string;
@@ -24,7 +24,11 @@ interface Loan {
   borrower: { name: string }; createdAt: string;
 }
 
-function getChama(): { id: string; name: string } | null {
+interface MpesaTx {
+  id: string; transactionType: string; phone: string; amount: string;
+  status: string; mpesaReceiptNo: string | null; createdAt: string;
+  resultDesc: string | null;
+}
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem('cp_chama');
   return raw ? JSON.parse(raw) : null;
@@ -34,6 +38,7 @@ export default function DashboardPage() {
   const [chama, setChama] = useState<Chama | null>(null);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
+  const [mpesaTxs, setMpesaTxs] = useState<MpesaTx[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,8 +48,9 @@ export default function DashboardPage() {
       api.get<Chama>(`/api/chamas/${c.id}`),
       api.get<Contribution[]>(`/api/contributions/chama/${c.id}`),
       api.get<Loan[]>(`/api/loans/chama/${c.id}`),
-    ]).then(([ch, co, lo]) => {
-      setChama(ch); setContributions(co); setLoans(lo);
+      api.get<MpesaTx[]>(`/api/mpesa/transactions`).catch(() => []),
+    ]).then(([ch, co, lo, txs]) => {
+      setChama(ch); setContributions(co); setLoans(lo); setMpesaTxs(txs);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -95,8 +101,7 @@ export default function DashboardPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Collection status */}
-        <div className="lg:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6">
-          <h2 className="font-700 text-[var(--text-primary)] mb-4">Collection status</h2>
+        <div className="lg:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6">          <h2 className="font-700 text-[var(--text-primary)] mb-4">Collection status</h2>
           <div className="flex gap-4 mb-5">
             {[
               { label: 'Paid', count: paidThisCycle, color: 'var(--success)', bg: 'var(--success-light)' },
@@ -202,6 +207,87 @@ export default function DashboardPage() {
             </div>
             <a href="/dashboard/members" className="block mt-4 text-sm text-[var(--primary)] font-500 hover:underline">
               View all {chama.members.length} members →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* M-Pesa Transaction Feed + AI Insights */}
+      <div className="grid lg:grid-cols-3 gap-6 mt-6">
+        {/* Live M-Pesa feed */}
+        <div className="lg:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-700 text-[var(--text-primary)]">M-Pesa activity</h2>
+            <span className="flex items-center gap-1.5 text-xs text-[var(--success)] font-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+              Live
+            </span>
+          </div>
+          {mpesaTxs.length === 0 ? (
+            <div className="text-center py-8 text-[var(--text-muted)] text-sm">
+              <Smartphone size={24} className="mx-auto mb-2 opacity-30" />
+              No transactions yet. Trigger an STK Push to see activity here.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-0">
+              {mpesaTxs.slice(0, 8).map((tx, i) => (
+                <div key={tx.id} className="flex items-center gap-3 py-3 border-b border-[var(--border)] last:border-0"
+                  style={{ animationDelay: `${i * 40}ms` }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      background: tx.status === 'SUCCESS' ? 'var(--success-light)' : tx.status === 'FAILED' ? 'var(--danger-light)' : 'var(--warning-light)',
+                    }}>
+                    <Smartphone size={14} style={{
+                      color: tx.status === 'SUCCESS' ? 'var(--success)' : tx.status === 'FAILED' ? 'var(--danger)' : 'var(--warning)',
+                    }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-500 text-[var(--text-primary)]">{tx.transactionType.replace(/_/g, ' ')}</div>
+                    <div className="text-xs text-[var(--text-muted)] truncate">{tx.phone} {tx.mpesaReceiptNo ? `· ${tx.mpesaReceiptNo}` : ''}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-700 tabular text-[var(--text-primary)]">{fmt(tx.amount)}</div>
+                    <Badge variant={tx.status === 'SUCCESS' ? 'success' : tx.status === 'FAILED' ? 'danger' : 'warning'}>
+                      {tx.status.charAt(0) + tx.status.slice(1).toLowerCase()}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* AI Insights teaser */}
+        <div className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse at top right, oklch(93% 0.05 38 / 0.6), transparent 70%)' }} />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles size={16} style={{ color: 'var(--primary)' }} />
+              <h2 className="font-700 text-[var(--text-primary)]">AI Insights</h2>
+              <span className="text-[10px] font-700 px-1.5 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)]">SOON</span>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mb-5">Powered by your chama's financial history</p>
+
+            {/* Blurred preview cards */}
+            <div className="flex flex-col gap-3 select-none" style={{ filter: 'blur(3px)', opacity: 0.6 }}>
+              {[
+                { label: 'Collection forecast', value: '94%', sub: 'likely to collect in full this cycle' },
+                { label: 'Default risk', value: '2 members', sub: 'showing early warning signs' },
+                { label: 'Optimal loan size', value: 'KES 8,500', sub: 'based on pool capacity' },
+              ].map(({ label, value, sub }) => (
+                <div key={label} className="rounded-lg p-3 bg-[var(--gray-50)] border border-[var(--border)]">
+                  <div className="text-xs text-[var(--text-muted)] mb-0.5">{label}</div>
+                  <div className="text-base font-800 text-[var(--text-primary)]">{value}</div>
+                  <div className="text-xs text-[var(--text-muted)]">{sub}</div>
+                </div>
+              ))}
+            </div>
+
+            <a href="/dashboard/insights"
+              className="mt-5 flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-600 transition-colors"
+              style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <Sparkles size={13} /> See preview
             </a>
           </div>
         </div>

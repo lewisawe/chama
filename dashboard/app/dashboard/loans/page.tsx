@@ -4,9 +4,10 @@ import { api } from '@/lib/api';
 import { fmt, fmtDate, fmtRelative } from '@/lib/utils';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { PageSpinner } from '@/components/ui/Spinner';
-
 import { downloadCSV } from '@/lib/csv';
+import { Smartphone } from 'lucide-react';
 
 interface Loan {
   id: string; amount: string; status: string; interestRate: string;
@@ -32,6 +33,8 @@ export default function LoansPage() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [repaying, setRepaying] = useState<string | null>(null);
+  const [repayMsg, setRepayMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null);
 
   const chama = getChama();
 
@@ -43,6 +46,18 @@ export default function LoansPage() {
   }, []);
 
   if (loading) return <PageSpinner />;
+
+  async function repayLoan(loanId: string) {
+    setRepaying(loanId); setRepayMsg(null);
+    try {
+      await api.post(`/api/loans/${loanId}/repay`, {});
+      setRepayMsg({ id: loanId, text: 'STK Push sent — check your phone', ok: true });
+      const updated = await api.get<Loan[]>(`/api/loans/chama/${chama!.id}`);
+      setLoans(updated);
+    } catch (e: any) {
+      setRepayMsg({ id: loanId, text: e.message, ok: false });
+    } finally { setRepaying(null); }
+  }
 
   const filtered = filter === 'ALL' ? loans : loans.filter(l => l.status === filter);
   const totalOut = loans.filter(l => ['DISBURSED', 'REPAYING'].includes(l.status))
@@ -110,6 +125,7 @@ export default function LoansPage() {
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Status</th>
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Due</th>
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Requested</th>
+              <th className="px-6 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -144,6 +160,18 @@ export default function LoansPage() {
                     {l.dueDate ? fmtDate(l.dueDate) : '—'}
                   </td>
                   <td className="px-6 py-4 text-sm text-[var(--text-muted)]">{fmtRelative(l.createdAt)}</td>
+                  <td className="px-6 py-4">
+                    {['DISBURSED', 'REPAYING'].includes(l.status) && (
+                      <div>
+                        <Button size="sm" variant="secondary" loading={repaying === l.id} onClick={() => repayLoan(l.id)}>
+                          <Smartphone size={13} /> Repay
+                        </Button>
+                        {repayMsg?.id === l.id && (
+                          <p className={`text-xs mt-1 ${repayMsg.ok ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{repayMsg.text}</p>
+                        )}
+                      </div>
+                    )}
+                  </td>
                 </tr>
               );
             })}

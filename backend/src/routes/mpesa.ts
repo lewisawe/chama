@@ -128,3 +128,16 @@ mpesaRouter.post('/callback/b2c/result', async (req, res) => {
 mpesaRouter.post('/callback/b2c/timeout', async (_req, res) => {
   res.json({ ResultCode: 0 });
 });
+
+// Recent M-Pesa transactions (for dashboard feed)
+mpesaRouter.get('/transactions', async (_req, res) => {
+  try {
+    const txs = await prisma.mpesaTransaction.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    res.json(txs);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

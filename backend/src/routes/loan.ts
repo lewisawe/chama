@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../utils/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { stkPush } from '../services/mpesa';
 
 export const loanRouter = Router();
 loanRouter.use(authenticate);
@@ -57,5 +58,35 @@ loanRouter.get('/mine', async (req: AuthRequest, res) => {
     res.json(loans);
   } catch {
     res.status(500).json({ error: 'Failed to fetch loans' });
+  }
+});
+
+// Trigger STK Push for loan repayment
+loanRouter.post('/:id/repay', async (req: AuthRequest, res) => {
+  try {
+    const loan = await prisma.loan.findUnique({
+      where: { id: req.params.id },
+      include: { borrower: true },
+    });
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    if (loan.borrowerId !== req.userId) return res.status(403).json({ error: 'Not your loan' });
+    if (!['DISBURSED', 'REPAYING'].includes(loan.status)) return res.status(400).json({ error: 'Loan not active' });
+
+    const remaining = Number(loan.amount) * (1 + Number(loan.interestRate)) - Number(loan.amountRepaid);
+    const phone = loan.borrower.phone.replace(/^0/, '254');
+
+    const stkRes = await stkPush(phone, Math.ceil(remaining), `LOAN-${loan.id.slice(0, 8)}`, 'Loan repayment');
+
+    await prisma.mpesaTransaction.create({
+      data: {
+        transactionType: 'LOAN_REPAYMENT', phone, amount: remaining,
+        status: 'PENDING', checkoutRequestId: stkRes.CheckoutRequestID,
+        relatedId: loan.id, relatedType: 'LOAN_REPAYMENT',
+      },
+    });
+
+    res.json({ message: 'STK Push sent', checkoutRequestId: stkRes.CheckoutRequestID });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
   }
 });

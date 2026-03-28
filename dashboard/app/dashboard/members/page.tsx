@@ -1,13 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { trustColor, trustLabel, fmtDate } from '@/lib/utils';
-import { Avatar } from '@/components/ui/Avatar';
+import { trustColor, trustLabel, fmtDate } from '@/lib/utils';import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { UserPlus, Shield } from 'lucide-react';
+import { UserPlus, Shield, Award, X } from 'lucide-react';
 
 interface Member {
   id: string; role: string; trustScore: number; joinedAt: string;
@@ -26,6 +25,7 @@ export default function MembersPage() {
   const [invitePhone, setInvitePhone] = useState('');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [certMember, setCertMember] = useState<Member | null>(null);
 
   const chama = getChama();
 
@@ -97,6 +97,7 @@ export default function MembersPage() {
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Role</th>
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Trust Score</th>
               <th className="text-left px-6 py-3 text-xs font-600 text-[var(--text-muted)] uppercase tracking-wide">Joined</th>
+              <th className="px-6 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -131,11 +132,61 @@ export default function MembersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-[var(--text-secondary)] tabular">{fmtDate(m.joinedAt)}</td>
+                <td className="px-6 py-4">
+                  <button onClick={() => setCertMember(m)}
+                    className="flex items-center gap-1.5 text-xs font-600 text-[var(--primary)] hover:underline cursor-pointer">
+                    <Award size={12} /> Certificate
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Trust Certificate Modal */}
+      {certMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'oklch(0% 0 0 / 0.4)' }}
+          onClick={() => setCertMember(null)}>
+          <div className="bg-[var(--surface)] rounded-2xl p-8 max-w-sm w-full shadow-xl animate-fade-up"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-800 text-[var(--text-primary)]">Trust Certificate</h2>
+              <button onClick={() => setCertMember(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Certificate design */}
+            <div className="rounded-xl p-6 mb-6 text-center border-2"
+              style={{ background: 'var(--primary-light)', borderColor: 'oklch(80% 0.10 38)' }}>
+              <Award size={32} className="mx-auto mb-3" style={{ color: 'var(--primary)' }} />
+              <div className="text-lg font-800 text-[var(--text-primary)] mb-1">{certMember.user.name}</div>
+              <div className="text-xs text-[var(--text-muted)] mb-4">{certMember.user.phone}</div>
+              <div className="text-4xl font-800 tabular mb-1" style={{ color: trustColor(certMember.trustScore) }}>
+                {certMember.trustScore}
+              </div>
+              <div className="text-sm font-600" style={{ color: trustColor(certMember.trustScore) }}>
+                {trustLabel(certMember.trustScore)} Standing
+              </div>
+              <div className="mt-4 pt-4 border-t border-[oklch(80%_0.10_38)] text-xs text-[var(--text-muted)]">
+                Issued by ChamaPesa · {new Date().toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { alert('SMS delivery coming soon — Africa\'s Talking integration in Q3'); }}
+                className="w-full py-2.5 rounded-lg text-sm font-600 transition-colors cursor-pointer"
+                style={{ background: 'var(--primary)', color: 'white' }}>
+                Send via SMS
+              </button>
+              <p className="text-center text-xs text-[var(--text-muted)]">SMS delivery via Africa's Talking — coming Q3</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

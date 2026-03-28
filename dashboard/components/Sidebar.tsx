@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import {
   LayoutDashboard, Users, CreditCard, RotateCcw,
   Landmark, Vote, PiggyBank, LogOut, Plus, ChevronDown,
+  Sparkles, Hash, Settings,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -19,6 +20,9 @@ const TREASURER_NAV = [
   { href: '/dashboard/loans',         icon: Landmark,        label: 'Loans' },
   { href: '/dashboard/motions',       icon: Vote,            label: 'Motions' },
   { href: '/dashboard/pools',         icon: PiggyBank,       label: 'Pools' },
+  { href: '/dashboard/insights',      icon: Sparkles,        label: 'AI Insights',  soon: true },
+  { href: '/dashboard/ussd',          icon: Hash,            label: 'USSD',         soon: true },
+  { href: '/dashboard/settings',      icon: Settings,        label: 'Settings' },
 ];
 
 const MEMBER_NAV = [
@@ -30,7 +34,7 @@ const MEMBER_NAV = [
 
 interface Chama { id: string; name: string; myRole: string; }
 
-interface SidebarProps {
+interface NavItem { href: string; icon: React.ElementType; label: string; soon?: boolean; }
   role: 'treasurer' | 'member';
   chamaName?: string;
 }
@@ -160,7 +164,7 @@ export function Sidebar({ role, chamaName }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 pb-4 overflow-y-auto">
-        {nav.map(({ href, icon: Icon, label }) => {
+        {nav.map(({ href, icon: Icon, label, soon }: NavItem) => {
           const active = pathname === href || (href !== '/dashboard' && href !== '/member' && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
@@ -172,6 +176,11 @@ export function Sidebar({ role, chamaName }: SidebarProps) {
               )}>
               <Icon size={16} strokeWidth={active ? 2.5 : 2} />
               {label}
+              {soon && (
+                <span className="ml-auto text-[10px] font-700 px-1.5 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)]">
+                  SOON
+                </span>
+              )}
             </Link>
           );
         })}
