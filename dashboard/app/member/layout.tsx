@@ -14,9 +14,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-screen">
       <Sidebar role="member" />
-      <main className="flex-1 overflow-auto" style={{ marginLeft: 'var(--sidebar-w)' }}>
+      <main className="flex-1 overflow-auto pb-20 md:pb-0" style={{ marginLeft: 'var(--sidebar-w)' }}>
         {children}
       </main>
     </div>
-  );
-}
+  );}

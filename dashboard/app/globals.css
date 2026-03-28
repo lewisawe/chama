@@ -48,6 +48,13 @@
 
   /* Spacing */
   --sidebar-w: 240px;
+  --sidebar-w-mobile: 0px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-w: 0px;
+  }
 }
 
 * { box-sizing: border-box; }
