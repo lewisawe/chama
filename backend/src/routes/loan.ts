@@ -64,8 +64,9 @@ loanRouter.get('/mine', async (req: AuthRequest, res) => {
 // Trigger STK Push for loan repayment
 loanRouter.post('/:id/repay', async (req: AuthRequest, res) => {
   try {
+    const loanId = req.params.id as string;
     const loan = await prisma.loan.findUnique({
-      where: { id: req.params.id },
+      where: { id: loanId },
       include: { borrower: true },
     });
     if (!loan) return res.status(404).json({ error: 'Loan not found' });
@@ -73,7 +74,8 @@ loanRouter.post('/:id/repay', async (req: AuthRequest, res) => {
     if (!['DISBURSED', 'REPAYING'].includes(loan.status)) return res.status(400).json({ error: 'Loan not active' });
 
     const remaining = Number(loan.amount) * (1 + Number(loan.interestRate)) - Number(loan.amountRepaid);
-    const phone = loan.borrower.phone.replace(/^0/, '254');
+    const borrower = loan.borrower as { phone: string };
+    const phone = borrower.phone.replace(/^0/, '254');
 
     const stkRes = await stkPush(phone, Math.ceil(remaining), `LOAN-${loan.id.slice(0, 8)}`, 'Loan repayment');
 
