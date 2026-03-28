@@ -1,0 +1,52 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get ALB DNS for dashboard build
+        id: alb
+        run: |
+          ALB=$(aws elbv2 describe-load-balancers --names chamapesa-alb \
+            --query 'LoadBalancers[0].DNSName' --output text --region us-west-2)
+          echo "dns=$ALB" >> $GITHUB_OUTPUT
+
+      - name: Build & push backend
+        run: |
+          docker build -t chamapesa-backend ./backend
+          docker tag chamapesa-backend:latest ${{ steps.ecr.outputs.registry }}/chamapesa-backend:latest
+          docker push ${{ steps.ecr.outputs.registry }}/chamapesa-backend:latest
+
+      - name: Build & push dashboard
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL="http://${{ steps.alb.outputs.dns }}" \
+            -t chamapesa-dashboard ./dashboard
+          docker tag chamapesa-dashboard:latest ${{ steps.ecr.outputs.registry }}/chamapesa-dashboard:latest
+          docker push ${{ steps.ecr.outputs.registry }}/chamapesa-dashboard:latest
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster chamapesa-cluster --service chamapesa-backend \
+            --force-new-deployment --region us-west-2 > /dev/null
+          aws ecs update-service --cluster chamapesa-cluster --service chamapesa-dashboard \
+            --force-new-deployment --region us-west-2 > /dev/null
+          echo "Deployment triggered. Services restarting..."

@@ -63,6 +63,24 @@
 - `.env` and `secrets.tfvars` gitignored
 - JWT required on all API endpoints
 
+### CI/CD
+GitHub Actions pipeline at `.github/workflows/deploy.yml` — triggers on every push to `main`:
+
+1. Configures AWS credentials from GitHub Secrets
+2. Logs into ECR
+3. Fetches ALB DNS dynamically (no hardcoded URLs)
+4. Builds and pushes backend Docker image
+5. Builds and pushes dashboard Docker image (with `NEXT_PUBLIC_API_URL` baked in)
+6. Forces ECS to redeploy both services
+
+**Required GitHub Secrets:**
+| Secret | Value |
+|--------|-------|
+| `AWS_ACCESS_KEY_ID` | IAM user access key with ECR + ECS permissions |
+| `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
+
+To set up: GitHub repo → Settings → Secrets and variables → Actions → New repository secret.
+
 ---
 
 ## Tomorrow's Agenda 📋
