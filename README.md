@@ -35,7 +35,7 @@ JWT_SECRET="change-this"
 
 MPESA_CONSUMER_KEY="..."
 MPESA_CONSUMER_SECRET="..."
-MPESA_PASSKEY="bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+MPESA_PASSKEY="bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"  # Safaricom's public sandbox passkey
 MPESA_SHORTCODE="174379"
 MPESA_ENV="sandbox"
 MPESA_CALLBACK_URL="https://your-ngrok-url/api/mpesa/callback"
