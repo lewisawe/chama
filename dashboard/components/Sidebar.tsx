@@ -89,6 +89,7 @@ export function Sidebar({ role, chamaName }: SidebarProps) {
   const displayName = currentChama?.name || chamaName;
 
   return (
+    <>
     <aside
       className="fixed top-0 left-0 h-full flex-col border-r border-[var(--border)] bg-[var(--surface)] hidden md:flex"
       style={{ width: 'var(--sidebar-w)' }}
@@ -224,5 +225,6 @@ export function Sidebar({ role, chamaName }: SidebarProps) {
         );
       })}
     </nav>
+    </>
   );
 }
