@@ -13,7 +13,6 @@ dist
 notgood.txt
 ideas.txt
 ChamaPesa_Features.md
-PROGRESS.md
 
 # Build artifacts
 tsconfig.tsbuildinfo
