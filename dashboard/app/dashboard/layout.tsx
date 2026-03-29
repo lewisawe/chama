@@ -15,12 +15,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const auth = getAuth();
     if (!auth) { router.push('/login'); return; }
     api.get<Chama[]>('/api/chamas').then(chamas => {
+      if (chamas.length === 0) {
+        // New user with no chamas — let them create one
+        router.replace('/dashboard/create');
+        return;
+      }
       const admin = chamas.find(c => c.myRole === 'ADMIN' || c.myRole === 'TREASURER');
       if (admin) {
         setChama(admin);
         localStorage.setItem('cp_chama', JSON.stringify(admin));
       } else {
-        // No admin/treasurer role — redirect to member view
+        // Member only — redirect to member view
         router.replace('/member');
       }
     }).catch(() => { router.replace('/member'); });
