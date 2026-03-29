@@ -14,8 +14,8 @@ docker tag chamapesa-backend:latest "$ECR_BASE/chamapesa-backend:latest"
 docker push "$ECR_BASE/chamapesa-backend:latest"
 
 echo "==> Building & pushing dashboard..."
-ALB_URL=$(cd infra && terraform output -raw alb_dns_name)
-docker build --build-arg NEXT_PUBLIC_API_URL="http://$ALB_URL" -t chamapesa-dashboard ./dashboard
+CF_DOMAIN=$(cd infra && terraform output -raw cloudfront_domain)
+docker build --build-arg NEXT_PUBLIC_API_URL="https://$CF_DOMAIN" -t chamapesa-dashboard ./dashboard
 docker tag chamapesa-dashboard:latest "$ECR_BASE/chamapesa-dashboard:latest"
 docker push "$ECR_BASE/chamapesa-dashboard:latest"
 

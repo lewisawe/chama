@@ -6,6 +6,14 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "chamapesa-terraform-state"
+    key            = "prod/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "chamapesa-terraform-lock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {

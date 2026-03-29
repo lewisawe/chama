@@ -1,66 +1,35 @@
 # ChamaPesa
 
-Smart chama (savings group) manager for Kenya. Automates M-Pesa collections, rotating payouts, goal-based savings pools, loan management, and anonymous voting.
+A smart chama (savings group) management platform built for Kenya. ChamaPesa automates the tedious, error-prone work of running a chama — M-Pesa collections, rotating payouts, loan management, goal-based savings pools, and anonymous voting — so groups can focus on growing together.
 
-## Requirements
+## About
 
-- Node.js 22+
-- Docker & Docker Compose
-- ngrok (for M-Pesa callbacks)
+### The Problem
 
-## Installation
+Over 300,000 chamas operate in Kenya, managing billions of shillings. Most run on spreadsheets, WhatsApp groups, and manual M-Pesa transfers. This leads to:
 
-```bash
-# 1. Clone and install dependencies
-cd backend && npm install
-cd ../dashboard && npm install
+- **Missed contributions** — no automated reminders or collection
+- **Trust issues** — opaque records, disputed payments, no audit trail
+- **Manual payouts** — treasurers manually sending M-Pesa to rotation recipients
+- **No accountability** — loan defaults go untracked, penalties unenforced
+- **Exclusion** — members without smartphones can't participate in decisions
 
-# 2. Start PostgreSQL
-cd .. && docker-compose up -d
+### The Solution
 
-# 3. Push database schema
-cd backend && npx prisma db push
+ChamaPesa digitizes the entire chama lifecycle:
 
-# 4. Seed demo data (optional)
-npm run seed
-```
+- Members contribute via **M-Pesa STK Push** — triggered automatically or on demand
+- **Merry-go-round payouts** are sent instantly via M-Pesa B2C to the next member in rotation
+- **Loans** are requested, voted on anonymously, and disbursed automatically on approval
+- A **trust score** (based on payment history, tenure, and participation) replaces subjective trust
+- **Goal-based pools** let chamas split contributions across emergency funds, investments, and savings targets
+- Every transaction is recorded with M-Pesa receipts for full transparency
 
-## Configuration
+## Live Demo
 
-Copy `.env.example` to `.env` in the `backend/` folder and fill in:
+🔗 **Live URL:** [https://d3czamd19a4so0.cloudfront.net](https://d3czamd19a4so0.cloudfront.net)
 
-```env
-DATABASE_URL="postgresql://chamapesa:chamapesa@localhost:5432/chamapesa"
-JWT_SECRET="change-this"
-
-MPESA_CONSUMER_KEY="..."
-MPESA_CONSUMER_SECRET="..."
-MPESA_PASSKEY="bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"  # Safaricom's public sandbox passkey
-MPESA_SHORTCODE="174379"
-MPESA_ENV="sandbox"
-MPESA_CALLBACK_URL="https://your-ngrok-url/api/mpesa/callback"
-```
-
-Get Daraja credentials at [developer.safaricom.co.ke](https://developer.safaricom.co.ke).
-
-## Running
-
-```bash
-# Terminal 1 — expose backend for M-Pesa callbacks
-ngrok http 3000
-
-# Terminal 2 — backend API
-cd backend && npm run dev
-
-# Terminal 3 — dashboard
-cd dashboard && npm run dev
-```
-
-- Backend: http://localhost:3000
-- Dashboard: http://localhost:3001
-- Landing page: http://localhost:3001/landing
-
-## Demo credentials (after seeding)
+### Demo Credentials
 
 | Name | Phone | PIN | Role |
 |------|-------|-----|------|
@@ -68,111 +37,290 @@ cd dashboard && npm run dev
 | Brian Otieno | 0723456789 | 1234 | Treasurer |
 | Cynthia Muthoni | 0734567890 | 1234 | Member |
 
-## API
+Admin/Treasurer accounts access the full dashboard. Member accounts access the member portal.
 
-Health check: `GET /health`
+## Screenshots
 
-See [PROGRESS.md](./PROGRESS.md) for full API reference.
+_Screenshots to be added_
 
----
+<!-- 
+Recommended screenshots:
+1. Landing page
+2. Dashboard overview (admin view)
+3. Contributions page with collection status
+4. Members page with trust scores
+5. Rotation/merry-go-round page
+6. Loans page
+7. Anonymous voting/motions
+8. Member portal
+-->
 
-## AWS Deployment
+## Key Features
 
-ChamaPesa runs on AWS using ECS Fargate (containers), RDS PostgreSQL, and an Application Load Balancer. All infrastructure is defined in `infra/` using Terraform.
+### M-Pesa Integration
+- **STK Push** — trigger payment prompts to members' phones
+- **B2C Payouts** — send rotation payouts and loan disbursements directly to M-Pesa
+- **Transaction Status** — verify pending payments via Daraja API
+- **Live feed** — real-time M-Pesa transaction log on the dashboard
 
-### Architecture
+### Chama Management
+- Create chamas, invite members by phone number
+- Set contribution amounts, frequency, and penalty rates
+- Role-based access (Admin, Treasurer, Member)
+
+### Merry-Go-Round
+- Drag-to-reorder rotation schedule
+- One-click "Pay Out Now" via M-Pesa B2C
+- Automated daily payouts when all members have contributed
+
+### Loans
+- Request loans (requires trust score ≥ 50)
+- Automatic anonymous vote created for each loan request
+- Auto-disbursement via M-Pesa B2C on vote approval
+- Repayment tracking with STK Push
+
+### Anonymous Voting
+- Create motions with configurable thresholds and deadlines
+- Anonymous ballot — results hidden until voting closes
+- Auto-execution on pass (e.g., loan disbursement)
+
+### Savings Pools
+- Goal-based pools (emergency fund, investment, education, etc.)
+- Configurable contribution splits (must total 100%)
+- Lock periods and withdrawal rules
+- Interest accrual
+
+### Trust Score
+- Weighted score based on: on-time contributions (40%), loan repayment (25%), tenure (15%), voting participation (10%), penalty history (10%)
+- Trust certificates for members
+
+### Automated Operations
+- 7am — SMS contribution reminders
+- 8am — Auto STK Push to all members
+- 9am — Auto B2C payout to next rotation member
+- 11pm — Mark unpaid contributions as missed
+- Every 30min — Expire voting motions past deadline
+- 1am — Accrue pool interest
+
+### Dashboard Views
+- **Admin/Treasurer:** Overview, contributions, members, loans, motions, pools, rotation, settings
+- **Member:** Personal overview, contributions, loans, voting
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Node.js 22, TypeScript, Express.js |
+| Database | PostgreSQL 16 (Prisma ORM) |
+| Frontend | Next.js 15, React, Tailwind CSS |
+| Payments | Safaricom Daraja API (STK Push, B2C, Transaction Status) |
+| SMS | Africa's Talking |
+| Scheduling | node-cron |
+| Auth | JWT + bcrypt PIN hashing |
+| Infrastructure | AWS ECS Fargate, RDS, ALB, CloudFront, ECR, Secrets Manager |
+| IaC | Terraform |
+| CI/CD | GitHub Actions |
+| Containerization | Docker |
+
+## Project Structure
 
 ```
-Internet → ALB → /api/* → ECS Fargate (backend:3000)
-                → /*    → ECS Fargate (dashboard:3001)
-                              ↓
-                         RDS PostgreSQL (private subnet)
-                              ↓
-                         Secrets Manager (credentials)
+ChamaPesa/
+├── backend/
+│   ├── prisma/
+│   │   ├── schema.prisma          # 12 models, 8 enums
+│   │   └── seed.ts                # Demo data seeder
+│   ├── src/
+│   │   ├── app.ts                 # Express entry point
+│   │   ├── middleware/auth.ts     # JWT authentication
+│   │   ├── routes/
+│   │   │   ├── auth.ts            # Register / Login
+│   │   │   ├── chama.ts           # CRUD, invite, rotation
+│   │   │   ├── contribution.ts    # Pay via STK Push, history
+│   │   │   ├── mpesa.ts           # Callbacks (STK, B2C)
+│   │   │   ├── loan.ts            # Request, approve, repay
+│   │   │   ├── motion.ts          # Voting & motions
+│   │   │   └── pool.ts            # Savings pools
+│   │   ├── services/
+│   │   │   ├── mpesa.ts           # Daraja API integration
+│   │   │   ├── sms.ts             # Africa's Talking
+│   │   │   └── trustScore.ts      # Trust score engine
+│   │   └── jobs/scheduler.ts      # Cron jobs
+│   ├── .env.example
+│   ├── Dockerfile
+│   └── package.json
+├── dashboard/
+│   ├── app/                       # Next.js pages
+│   ├── components/                # Shared UI components
+│   ├── lib/                       # API client, auth, utils
+│   ├── Dockerfile
+│   └── package.json
+├── infra/                         # Terraform (ECS, RDS, ALB, CloudFront, VPC)
+├── deploy.sh                      # Build & deploy to AWS
+├── docker-compose.yml             # Local PostgreSQL
+└── .github/workflows/deploy.yml   # CI/CD pipeline
 ```
+
+## Setup & Installation
 
 ### Prerequisites
 
-- AWS CLI configured (`aws configure`)
-- Terraform 1.5+
-- Docker
+- Node.js 22+
+- Docker & Docker Compose
+- ngrok (for M-Pesa callbacks in development)
 
-### First-time setup
+### 1. Clone the repository
 
 ```bash
-# 1. Create secrets.tfvars (never commit this)
-cat > infra/secrets.tfvars <<EOF
-db_password           = "your-db-password"
-jwt_secret            = "$(openssl rand -base64 48)"
-mpesa_consumer_key    = "your-daraja-key"
-mpesa_consumer_secret = "your-daraja-secret"
-mpesa_passkey         = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-mpesa_b2c_shortcode   = "600000"
-mpesa_b2c_initiator   = "testapi"
-mpesa_b2c_password    = "your-b2c-security-credential"
-EOF
-
-# 2. Provision infrastructure
-cd infra
-terraform init
-terraform apply -var-file="secrets.tfvars"
-
-# 3. Build and deploy containers
-cd ..
-./deploy.sh
+git clone https://github.com/your-org/chamapesa.git
+cd chamapesa
 ```
 
-### Subsequent deploys
+### 2. Start PostgreSQL
 
 ```bash
-./deploy.sh
+docker-compose up -d
 ```
 
-Builds both Docker images, pushes to ECR, and forces ECS to redeploy.
-
-### Seed demo data
-
-After first deploy, run the seed as a one-off ECS task:
+### 3. Configure environment
 
 ```bash
-aws ecs run-task \
-  --cluster chamapesa-cluster \
-  --launch-type FARGATE \
-  --task-definition chamapesa-backend \
-  --network-configuration "awsvpcConfiguration={subnets=[<private-subnet-id>],securityGroups=[<ecs-sg-id>],assignPublicIp=DISABLED}" \
-  --overrides '{"containerOverrides":[{"name":"backend","command":["npx","ts-node","prisma/seed.ts"]}]}' \
-  --region us-west-2
+cp backend/.env.example backend/.env
 ```
 
-Or get subnet/SG IDs from `terraform output`.
+Edit `backend/.env` and fill in your API keys:
+- **Daraja credentials** — get from [developer.safaricom.co.ke](https://developer.safaricom.co.ke)
+- **Africa's Talking** — get from [africastalking.com](https://africastalking.com)
 
-### Infrastructure components
+### 4. Install dependencies & set up database
 
-| Component | Details |
-|-----------|---------|
-| ECS Cluster | `chamapesa-cluster` — Fargate, no servers to manage |
-| Backend service | 0.5 vCPU / 1GB RAM, auto-restarts on failure |
-| Dashboard service | 0.5 vCPU / 1GB RAM, Next.js standalone |
-| RDS | PostgreSQL 16.13, db.t3.micro, encrypted at rest |
-| ALB | Routes `/api/*` and `/health` to backend, all else to dashboard |
-| Secrets Manager | One secret per credential — injected as env vars at runtime |
-| ECR | `chamapesa-backend` and `chamapesa-dashboard` repositories |
-| VPC | 2 public subnets (ALB), 2 private subnets (ECS + RDS), NAT gateway |
-
-### Secrets management
-
-All credentials are stored in AWS Secrets Manager — never in code or environment files. The ECS task execution role has IAM permission to fetch them at container startup.
-
-To rotate a secret:
 ```bash
-# Update secrets.tfvars, then:
+cd backend && npm install
+npx prisma generate
+npx prisma db push
+```
+
+### 5. Seed demo data (optional)
+
+```bash
+npm run seed
+```
+
+### 6. Run the backend
+
+```bash
+npm run dev
+```
+
+### 7. Run the dashboard
+
+```bash
+cd ../dashboard && npm install
+npm run dev
+```
+
+### 8. Expose for M-Pesa callbacks (development)
+
+```bash
+ngrok http 3000
+```
+
+Update `MPESA_CALLBACK_URL` in `.env` with the ngrok URL.
+
+### Verify
+
+```bash
+curl http://localhost:3000/health
+# → {"status":"ok"}
+```
+
+- Backend: http://localhost:3000
+- Dashboard: http://localhost:3001
+
+## API Reference
+
+### Authentication
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | `{phone, name, pin}` | Register new user |
+| POST | `/api/auth/login` | `{phone, pin}` | Login, returns JWT |
+
+### Chamas
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chamas` | Create chama |
+| GET | `/api/chamas` | List my chamas |
+| GET | `/api/chamas/:id` | Chama details with members, pools, rotation |
+| POST | `/api/chamas/:id/invite` | Invite member by phone |
+| POST | `/api/chamas/:id/rotation` | Set merry-go-round order |
+
+### Contributions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/contributions/pay` | Trigger M-Pesa STK Push |
+| GET | `/api/contributions/chama/:chamaId` | All contributions for a chama |
+| GET | `/api/contributions/mine/:chamaId` | My contributions |
+
+### Loans
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/loans/request` | Request loan (trust score ≥ 50 required) |
+| GET | `/api/loans/chama/:chamaId` | Chama loans |
+| GET | `/api/loans/mine` | My loans |
+
+### Motions & Voting
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/motions` | Create motion |
+| POST | `/api/motions/:id/vote` | Cast anonymous vote |
+| GET | `/api/motions/:id` | Motion details |
+| GET | `/api/motions/chama/:chamaId` | Chama motions |
+
+### Pools
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/pools` | Create pool |
+| GET | `/api/pools/chama/:chamaId` | List pools |
+| PUT | `/api/pools/splits/:chamaId` | Update splits (must total 100%) |
+
+### M-Pesa Callbacks (called by Safaricom)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/mpesa/callback/stk` | STK Push result |
+| POST | `/api/mpesa/callback/b2c/result` | B2C payout result |
+| POST | `/api/mpesa/callback/b2c/timeout` | B2C timeout |
+
+All endpoints except auth and callbacks require `Authorization: Bearer <token>`.
+
+## AWS Deployment
+
+The app runs on AWS using ECS Fargate, RDS PostgreSQL, CloudFront (HTTPS), and an Application Load Balancer.
+
+```
+Internet → CloudFront (HTTPS) → ALB → /api/* → ECS (backend:3000)
+                                     → /*    → ECS (dashboard:3001)
+                                                    ↓
+                                              RDS PostgreSQL (private subnet)
+```
+
+Infrastructure is defined in `infra/` using Terraform. See the deploy instructions in `infra/` or run:
+
+```bash
 cd infra && terraform apply -var-file="secrets.tfvars"
-# Force ECS to restart and pick up new values:
-aws ecs update-service --cluster chamapesa-cluster --service chamapesa-backend --force-new-deployment --region us-west-2
+./deploy.sh
 ```
 
-### Tear down
+## Team
 
-```bash
-cd infra && terraform destroy -var-file="secrets.tfvars"
-```
+| Name | Role |
+|------|------|
+| Rodwell Leo | Backend |
+| Sebastian Wanjala | Frontend |
+| Eric Owuor | Backend |
+| Jeddy Chella | Backend |
+| Brigit Melbride | Data Science |
+| Lewis Sawe | Cybersecurity |
+
+## License
+
+MIT

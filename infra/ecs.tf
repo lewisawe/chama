@@ -95,7 +95,7 @@ resource "aws_ecs_task_definition" "backend" {
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = [
       { name = "PORT", value = "3000" },
-      { name = "MPESA_CALLBACK_URL", value = "https://${aws_lb.main.dns_name}/api/mpesa/callback" }
+      { name = "MPESA_CALLBACK_URL", value = "https://${aws_cloudfront_distribution.main.domain_name}/api/mpesa/callback" }
     ]
     secrets = [
       { name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.app["DATABASE_URL"].arn },
@@ -135,7 +135,7 @@ resource "aws_ecs_task_definition" "dashboard" {
     portMappings = [{ containerPort = 3001, protocol = "tcp" }]
     environment = [
       { name = "PORT", value = "3001" },
-      { name = "NEXT_PUBLIC_API_URL", value = "http://${aws_lb.main.dns_name}" }
+      { name = "NEXT_PUBLIC_API_URL", value = "https://${aws_cloudfront_distribution.main.domain_name}" }
     ]
     logConfiguration = {
       logDriver = "awslogs"
