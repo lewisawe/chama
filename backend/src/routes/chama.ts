@@ -85,6 +85,26 @@ chamaRouter.post('/:id/invite', async (req: AuthRequest, res) => {
   }
 });
 
+chamaRouter.put('/:id/members/:memberId/role', async (req: AuthRequest, res) => {
+  try {
+    const { id: chamaId, memberId } = req.params;
+    const { role } = req.body;
+    if (!['TREASURER', 'MEMBER'].includes(role)) return res.status(400).json({ error: 'Role must be TREASURER or MEMBER' });
+
+    const requester = await prisma.chamaMember.findFirst({ where: { chamaId, userId: req.userId! } });
+    if (!requester || requester.role !== 'ADMIN') return res.status(403).json({ error: 'Only admin can change roles' });
+
+    const updated = await prisma.chamaMember.update({
+      where: { id: memberId },
+      data: { role },
+      include: { user: { select: { id: true, name: true, phone: true } } },
+    });
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
 chamaRouter.post('/:id/rotation', async (req: AuthRequest, res) => {
   try {
     const chamaId = req.params.id as string;

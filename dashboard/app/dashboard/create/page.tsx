@@ -26,7 +26,7 @@ export default function CreateChamaPage() {
         ...form, contributionAmount: Number(form.contributionAmount),
       });
       localStorage.setItem('cp_chama', JSON.stringify(chama));
-      router.push('/dashboard');
+      router.push('/dashboard/members?new=1');
     } catch (err: any) {
       setError(err.message);
     } finally { setLoading(false); }

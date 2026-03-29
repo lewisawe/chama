@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { trustColor, trustLabel, fmtDate } from '@/lib/utils';import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -26,6 +27,8 @@ export default function MembersPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [certMember, setCertMember] = useState<Member | null>(null);
+  const searchParams = useSearchParams();
+  const isNew = searchParams.get('new') === '1';
 
   const chama = getChama();
 
@@ -63,6 +66,14 @@ export default function MembersPage() {
           <p className="text-[var(--text-secondary)] text-sm mt-1">{members.length} members in this chama</p>
         </div>
       </div>
+
+      {/* Welcome banner for new chamas */}
+      {isNew && (
+        <div className="rounded-xl p-5 mb-6 border" style={{ background: 'var(--success-light)', borderColor: 'oklch(80% 0.08 155)' }}>
+          <h2 className="font-700 text-[var(--success)] mb-1">🎉 Chama created!</h2>
+          <p className="text-sm text-[var(--success)]">Now invite your members by phone number below. They'll need to register first.</p>
+        </div>
+      )}
 
       {/* Invite form */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 mb-6">
@@ -114,10 +125,28 @@ export default function MembersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant={m.role === 'ADMIN' ? 'info' : m.role === 'TREASURER' ? 'warning' : 'neutral'}>
-                    {m.role === 'ADMIN' && <Shield size={10} className="mr-1" />}
-                    {m.role.charAt(0) + m.role.slice(1).toLowerCase()}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={m.role === 'ADMIN' ? 'info' : m.role === 'TREASURER' ? 'warning' : 'neutral'}>
+                      {m.role === 'ADMIN' && <Shield size={10} className="mr-1" />}
+                      {m.role.charAt(0) + m.role.slice(1).toLowerCase()}
+                    </Badge>
+                    {m.role !== 'ADMIN' && chama && (
+                      <select
+                        value={m.role}
+                        onChange={async (e) => {
+                          try {
+                            await api.put(`/api/chamas/${chama.id}/members/${m.id}/role`, { role: e.target.value });
+                            const c = await api.get<any>(`/api/chamas/${chama.id}`);
+                            setMembers(c.members);
+                          } catch {}
+                        }}
+                        className="text-xs px-1.5 py-1 rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] cursor-pointer"
+                      >
+                        <option value="MEMBER">Member</option>
+                        <option value="TREASURER">Treasurer</option>
+                      </select>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2.5">
