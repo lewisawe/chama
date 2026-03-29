@@ -87,7 +87,8 @@ chamaRouter.post('/:id/invite', async (req: AuthRequest, res) => {
 
 chamaRouter.put('/:id/members/:memberId/role', async (req: AuthRequest, res) => {
   try {
-    const { id: chamaId, memberId } = req.params;
+    const chamaId = req.params.id as string;
+    const memberId = req.params.memberId as string;
     const { role } = req.body;
     if (!['TREASURER', 'MEMBER'].includes(role)) return res.status(400).json({ error: 'Role must be TREASURER or MEMBER' });
 

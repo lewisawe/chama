@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import { trustColor, trustLabel, fmtDate } from '@/lib/utils';import { Avatar } from '@/components/ui/Avatar';
+import { trustColor, trustLabel, fmtDate } from '@/lib/utils';
+import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -27,8 +27,7 @@ export default function MembersPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [certMember, setCertMember] = useState<Member | null>(null);
-  const searchParams = useSearchParams();
-  const isNew = searchParams.get('new') === '1';
+  const isNew = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('new') === '1';
 
   const chama = getChama();
 
