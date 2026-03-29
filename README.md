@@ -41,19 +41,41 @@ Admin/Treasurer accounts access the full dashboard. Member accounts access the m
 
 ## Screenshots
 
-_Screenshots to be added_
+### Landing Page
+![Landing Page](assets/landingPage.png)
 
-<!-- 
-Recommended screenshots:
-1. Landing page
-2. Dashboard overview (admin view)
-3. Contributions page with collection status
-4. Members page with trust scores
-5. Rotation/merry-go-round page
-6. Loans page
-7. Anonymous voting/motions
-8. Member portal
--->
+### Registration
+![Registration](assets/registrationPage.png)
+
+### Admin Dashboard
+![Admin Dashboard](assets/adminDashboard.png)
+
+### Contributions
+![Contributions](assets/contributionAdminDashboard.png)
+
+### Merry-Go-Round Rotation
+![Rotation](assets/adminRotationDashboard.png)
+
+### Loans
+![Loans](assets/adminLoansDashboard.png)
+
+### Anonymous Voting
+![Voting](assets/adminVotingDashboard.png)
+
+### Savings Pools
+![Pools](assets/adminPoolsInvestmentsDashboard.png)
+
+### Member Portal
+![Member Dashboard](assets/memberDashboard.png)
+
+### Member Contributions
+![Member Contributions](assets/memberContributionDashboard.png)
+
+### Member Loans
+![Member Loans](assets/memberLoansDashboard.png)
+
+### Member Voting
+![Member Voting](assets/memberVoteDashboard.png)
 
 ## Key Features
 
